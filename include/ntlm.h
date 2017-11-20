@@ -113,10 +113,11 @@ public:
     uint32_t get_flag();
     bool support_unicode();
     const byte* get_target_info(uint16_t& target_info_len);
+	bool isValid();
 private:
     Type2Message msg2;
-    byte* msg2_buff;
-      
+    char* msg2_buff;
+	size_t msg2_buff_len;
 };
 #define MSG1_SIZE	(sizeof(struct Type1Message))
 #define MSG2_SIZE	(sizeof(struct Type2Message))

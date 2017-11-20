@@ -63,7 +63,10 @@ string make_type3_msg(string username, string password, string domain, string ho
         return "";
     }
     Message2Handle msg2_handle(msg2_b64_buff);
-    
+    if (!msg2_handle.isValid())
+	{
+		return "";
+	}
     bool support_unicode = msg2_handle.support_unicode();
     
     struct Type3Message msg3;
@@ -463,12 +466,25 @@ Message2Handle::Message2Handle(const string & msg2_b64_buff)
     size_t msg2_buff_len = BASE64_DECODE_LENGTH(msg2_b64_buff.length());
     msg2_buff = new byte[msg2_buff_len];    
     base64_decode(msg2_b64_buff.c_str(), msg2_buff);
-    memmove(&msg2, msg2_buff, MSG2_SIZE);
-    /*
+	
+    //memmove(&msg2, msg2_buff, MSG2_SIZE);
+	if (msg2_buff_len >= MSG2_SIZE)
+	{
+		memmove(&msg2, msg2_buff, MSG2_SIZE);
+	}
+	else if (MSG2_SIZE == 56 && msg2_buff_len == 48)
+	{
+		//may not has version
+		////http://davenport.sourceforge.net/ntlm.html#theType2Message
+		memmove(&msg2, msg2_buff, 48);
+	}
+	//else, the msg is not valid
+    
+	/*
     * following is a tricky part
-    * the memmove directly may cause:
+    * using memmove directly may cause:
     * some little endian data was recognized as big endian data in big endian machine
-    * so,just call toLittleEndian() in TmAuDIUtil could solve
+    * so,just call to_little_endian() could solve
     */
     if(is_big_endian())
     {
@@ -490,6 +506,64 @@ Message2Handle::~Message2Handle()
         delete [] msg2_buff;
     }
 }
+
+
+bool Message2Handle::isValid()
+{
+	if (0 != strcmp(msg2.signature, NTLMSSP_SIGNATURE))
+	{
+		return false;
+	}
+	if (2 != msg2.type)
+	{
+		return false;
+	}
+
+	//Verify the offset diff size
+	if (msg2.target_name_off < msg2.target_info_off)
+	{
+		if ((msg2.target_info_off - msg2.target_name_off) != msg2.target_name_len)
+			return false;
+	}
+	else if (msg2.target_info_off < msg2.target_name_off)
+	{
+		if ((msg2.target_name_off - msg2.target_info_off) != msg2.target_info_len)
+			return false;
+	}
+	else if (msg2.target_info_off == msg2.target_name_off)
+	{
+		if (msg2.target_name_len != 0 || msg2.target_info_len != 0)
+			return false;
+	}
+
+	//Verify the buff length
+	if (56 == msg2.target_info_off || 48 == msg2.target_info_off || 56 == msg2.target_name_off || 48 == msg2.target_name_off)
+	{
+		if (48 == msg2.target_info_off || 48 == msg2.target_name_off)
+		{
+			//no version
+			if ((48 + msg2.target_name_len + msg2.target_info_len) != msg2_buff_len)
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if ((56 + msg2.target_name_len + msg2.target_info_len) != msg2_buff_len)
+			{
+				return false;
+			}
+		}
+		//TRUE
+		return true;
+	}
+	else
+	{
+		//The offset must be match one of {48, 56}
+		return false;
+	}
+}
+
 
 const byte* Message2Handle::get_challenge()
 {
