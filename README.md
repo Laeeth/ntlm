@@ -48,4 +48,5 @@ g++ -o test util.o ntlm.o test.o -Llib -lssl -lcrypto -pthread -ldl
 ```
 
 Note
-You should be deleted.
+---------
+If you want change, please pull request to me. I hope we can make this code better.
