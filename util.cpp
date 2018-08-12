@@ -159,7 +159,7 @@ size_t base64_decode(const char *src, byte *dst) {
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); 
     size_t decode_len = BIO_read(bio, (void*)dst, strlen(src));
     BIO_free_all(bio);
-
+	return decode_len;
 }
 
 void base64_encode (const char *src, char *dst, size_t length) {

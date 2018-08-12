@@ -463,9 +463,9 @@ Message2Handle::Message2Handle(const string & msg2_b64_buff)
 {
     memset(&msg2, 0, MSG2_SIZE);
     msg2_buff = NULL;
-    size_t msg2_buff_len = BASE64_DECODE_LENGTH(msg2_b64_buff.length());
+    msg2_buff_len = BASE64_DECODE_LENGTH(msg2_b64_buff.length());
     msg2_buff = new byte[msg2_buff_len];    
-    base64_decode(msg2_b64_buff.c_str(), msg2_buff);
+    msg2_buff_len = base64_decode(msg2_b64_buff.c_str(), msg2_buff);
 	
     //memmove(&msg2, msg2_buff, MSG2_SIZE);
 	if (msg2_buff_len >= MSG2_SIZE)
